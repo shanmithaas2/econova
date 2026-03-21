@@ -47,14 +47,24 @@ def schedule_pickup(data: PickupData, db: Session = Depends(get_db), user_id: in
 
     user = db.query(User).filter(User.id == user_id).first()
     user.reward_points += 10
-
     db.commit()
 
+    # Capture values before thread
+    user_email = user.email
+    user_name = user.name
+    waste_type = data.waste_type
+    preferred_date = data.preferred_date
+    location = data.location
+
     # Send confirmation email in background
-    threading.Thread(
-        target=email_pickup_scheduled,
-        args=(user.email, user.name, data.waste_type, data.preferred_date, data.location)
-    ).start()
+    def send_pickup_email():
+        try:
+            email_pickup_scheduled(user_email, user_name, waste_type, preferred_date, location)
+            print(f"Pickup email sent to {user_email}")
+        except Exception as e:
+            print(f"Pickup email failed: {e}")
+
+    threading.Thread(target=send_pickup_email).start()
 
     return {"message": "Pickup scheduled successfully", "pickup_id": pickup.id}
 
