@@ -1,4 +1,6 @@
-import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import os
 from dotenv import load_dotenv
 
@@ -6,20 +8,22 @@ load_dotenv()
 
 def send_email(to_email: str, subject: str, body: str):
     try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "from": "EcoNova <onboarding@resend.dev>",
-                "to": [to_email],
-                "subject": subject,
-                "html": body
-            }
-        )
-        print(f"Email sent: {response.status_code} - {response.text}")
+        sender = os.getenv("BREVO_SMTP_USER")
+        password = os.getenv("BREVO_SMTP_KEY")
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"EcoNova <{sender}>"
+        msg["To"] = to_email
+
+        msg.attach(MIMEText(body, "html"))
+
+        with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+            server.starttls()
+            server.login(sender, password)
+            server.sendmail(sender, to_email, msg.as_string())
+
+        print(f"Email sent successfully to {to_email}")
         return True
     except Exception as e:
         print(f"Email error: {e}")
@@ -112,13 +116,13 @@ def email_complaint_resolved(to_email: str, name: str, complaint_desc: str):
               <h1 style="color: white; margin: 0; font-size: 22px;">EcoNova</h1>
             </div>
             <div style="padding: 28px 32px;">
-              <h2 style="color: #0a1f12;">Complaint Resolved!</h2>
+              <h2 style="color: #0a1f12;">Complaint Resolved! ✅</h2>
               <p style="color: #374151;">Hi {name}, your complaint has been resolved by our municipal team.</p>
               <div style="background: #f0fdf4; border-radius: 10px; padding: 16px; margin: 20px 0;">
                 <p style="color: #6b7280; font-size: 13px; margin: 0 0 6px;">Your complaint:</p>
                 <p style="color: #0a1f12; font-style: italic; margin: 0;">"{complaint_desc}"</p>
               </div>
-              <p style="color: #374151;">Thank you for helping keep our city clean!</p>
+              <p style="color: #374151;">Thank you for helping keep our city clean! 🌿</p>
             </div>
           </div>
         </body>
@@ -139,7 +143,7 @@ def email_bin_alert(to_email: str, zone: str, fill_level: int):
               <h1 style="color: white; margin: 0; font-size: 22px;">EcoNova Alert</h1>
             </div>
             <div style="padding: 28px 32px;">
-              <h2 style="color: #dc2626;">Bin Alert!</h2>
+              <h2 style="color: #dc2626;">Bin Alert! 🚨</h2>
               <div style="background: #fef2f2; border-radius: 10px; padding: 20px; margin: 20px 0;">
                 <p style="font-size: 32px; font-weight: bold; color: #dc2626; margin: 0 0 8px;">{fill_level}%</p>
                 <p style="color: #7f1d1d; margin: 0;">Zone: <strong>{zone}</strong> - Immediate pickup required!</p>
