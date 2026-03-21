@@ -6,7 +6,6 @@ from models import PickupRequest, Activity, User
 from jose import jwt
 from typing import Optional
 import os
-import threading
 from email_service import email_pickup_scheduled
 
 router = APIRouter()
@@ -49,22 +48,12 @@ def schedule_pickup(data: PickupData, db: Session = Depends(get_db), user_id: in
     user.reward_points += 10
     db.commit()
 
-    # Capture values before thread
-    user_email = user.email
-    user_name = user.name
-    waste_type = data.waste_type
-    preferred_date = data.preferred_date
-    location = data.location
-
-    # Send confirmation email in background
-    def send_pickup_email():
-        try:
-            email_pickup_scheduled(user_email, user_name, waste_type, preferred_date, location)
-            print(f"Pickup email sent to {user_email}")
-        except Exception as e:
-            print(f"Pickup email failed: {e}")
-
-    threading.Thread(target=send_pickup_email).start()
+    # Send email directly for debugging
+    try:
+        email_pickup_scheduled(user.email, user.name, data.waste_type, data.preferred_date, data.location)
+        print(f"Pickup email sent to {user.email}")
+    except Exception as e:
+        print(f"Pickup email failed: {e}")
 
     return {"message": "Pickup scheduled successfully", "pickup_id": pickup.id}
 
