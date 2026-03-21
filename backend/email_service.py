@@ -17,12 +17,11 @@ def send_email(to_email: str, subject: str, body: str):
         msg["To"] = to_email
 
         msg.attach(MIMEText(body, "html"))
-
-        with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-            server.starttls()
+        with smtplib.SMTP_SSL("smtp-relay.brevo.com", 465) as server:
             server.login(sender, password)
             server.sendmail(sender, to_email, msg.as_string())
 
+        
         print(f"Email sent successfully to {to_email}")
         return True
     except Exception as e:
