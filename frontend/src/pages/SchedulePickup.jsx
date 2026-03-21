@@ -3,7 +3,7 @@ import axios from "axios"
 import Sidebar from "../components/Sidebar"
 import PageHeader from "../components/PageHeader"
 
-const API = "http://localhost:8000"
+const API = "https://econova-backend-qg2j.onrender.com"
 
 export default function SchedulePickup() {
   const [form, setForm] = useState({ wasteType: "", quantity: "", location: "", date: "", notes: "" })

@@ -5,7 +5,7 @@ import StatCard from "../components/StatCard"
 import PageHeader from "../components/PageHeader"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
-const API = "http://localhost:8000"
+const API = "https://econova-backend-qg2j.onrender.com"
 
 const weeklyData = [
   { day: "Mon", kg: 2.4 }, { day: "Tue", kg: 1.8 }, { day: "Wed", kg: 3.2 },

@@ -4,7 +4,7 @@ import Sidebar from "../components/Sidebar"
 import PageHeader from "../components/PageHeader"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
-const API = "http://localhost:8000"
+const API = "https://econova-backend-qg2j.onrender.com"
 
 const BINS = [
   { id: 1, zone: "RS Puram",       type: "General",    color: "#6b7280", capacity: 100 },

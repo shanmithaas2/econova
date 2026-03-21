@@ -3,7 +3,7 @@ import axios from "axios"
 import Sidebar from "../components/Sidebar"
 import PageHeader from "../components/PageHeader"
 
-const API = "http://localhost:8000"
+const API = "https://econova-backend-qg2j.onrender.com"
 
 const CARBON_FACTORS = {
   Plastic: 0.3, Glass: 0.3, Paper: 0.9, Metal: 0.4,

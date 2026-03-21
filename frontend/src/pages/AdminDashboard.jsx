@@ -5,7 +5,7 @@ import StatCard from "../components/StatCard"
 import PageHeader from "../components/PageHeader"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 
-const API = "http://localhost:8000"
+const API = "https://econova-backend-qg2j.onrender.com"
 
 const monthlyUsers = [
   { month: "Jul", users: 320 }, { month: "Aug", users: 480 },
