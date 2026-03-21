@@ -40,7 +40,13 @@ def register(data: RegisterData, db: Session = Depends(get_db)):
     db.refresh(user)
 
     # Send welcome email in background
-    threading.Thread(target=email_welcome, args=(user.email, user.name)).start()
+    def send_welcome():
+        try:
+            email_welcome(user.email, user.name)
+            print(f"Welcome email sent to {user.email}")
+        except Exception as e:
+            print(f"Welcome email failed: {e}")
+    threading.Thread(target=send_welcome).start()
 
     return {"message": "Registered successfully"}
 
