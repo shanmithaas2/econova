@@ -1,48 +1,82 @@
-import { useState } from "react"
-
-const FAQ = [
-  { keywords: ["hello", "hi", "hey"],                         answer: "Hello! I am EcoNova's assistant. Ask me anything about waste management!" },
-  { keywords: ["plastic", "recycle plastic"],                 answer: "Plastic goes in the Blue Bin. Rinse it first, remove caps, and flatten bottles. You earn 20 points per report!" },
-  { keywords: ["glass"],                                      answer: "Glass goes in the Blue Bin. Rinse bottles, remove metal lids. Never include broken glass or mirrors." },
-  { keywords: ["battery", "batteries"],                       answer: "Batteries are hazardous! Tape the terminals and drop them at a certified e-waste center. Never throw in regular bins. You earn 30 points!" },
-  { keywords: ["e-waste", "ewaste", "electronics", "laptop", "phone", "mobile"], answer: "E-Waste goes in the Red Bin. Wipe personal data first, take to a certified collector. Earn 40 points per report!" },
-  { keywords: ["food", "organic", "compost"],                 answer: "Food waste goes in the Green Bin. You can also home compost it. Earn 10 points per report!" },
-  { keywords: ["medical", "medicine", "syringe"],             answer: "Medical waste goes in the Yellow Bin. Use puncture-proof containers for sharps and contact your health authority." },
-  { keywords: ["clothes", "textile", "fabric"],               answer: "Clean clothes can be donated. Damaged textiles go for textile recycling. Earn 15 points per report!" },
-  { keywords: ["points", "rewards", "earn"],                  answer: "You earn points by reporting waste, scheduling pickups, and more. Redeem them for grocery vouchers, electricity credits, and more!" },
-  { keywords: ["pickup", "schedule", "collect"],              answer: "Go to Schedule Pickup from your dashboard to request a waste collection. You earn 10 bonus points per pickup!" },
-  { keywords: ["complaint", "issue", "problem", "overflow"],  answer: "You can lodge a complaint from the Complaints section. Our municipal team responds within 24 hours!" },
-  { keywords: ["carbon", "co2", "environment"],               answer: "Every kg of waste you recycle saves carbon emissions. Check your Carbon Calculator page to see your total impact!" },
-  { keywords: ["nearby", "center", "location", "where"],      answer: "Visit the Nearby Centers page to find certified recycling and disposal facilities close to you!" },
-  { keywords: ["leaderboard", "rank", "top"],                 answer: "Check the Rewards page to see the city leaderboard and your rank among all eco-conscious citizens!" },
-  { keywords: ["bin", "color", "colour"],                     answer: "Blue Bin = Recyclables, Green Bin = Organic, Red Bin = Hazardous, Yellow Bin = Medical Waste" },
-  { keywords: ["register", "signup", "account"],              answer: "You can register as a Citizen, Municipal Staff, Recycler, or Admin from the Register page!" },
-]
-
-function getBotResponse(input) {
-  const lower = input.toLowerCase()
-  for (const faq of FAQ) {
-    if (faq.keywords.some(k => lower.includes(k))) {
-      return faq.answer
-    }
-  }
-  return "I am not sure about that! Try asking about waste types, points, pickups, complaints, or nearby centers."
-}
+import { useState, useRef, useEffect } from "react"
 
 export default function Chatbot() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { from: "bot", text: "Hi! I am EcoNova Assistant. Ask me about waste disposal, points, or pickups!" }
+    {
+      from: "bot",
+      text: "Hi! I am EcoNova's AI Waste Assistant. Ask me anything about waste disposal, recycling, carbon footprint, or environmental tips!"
+    }
   ])
   const [input, setInput] = useState("")
+  const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef(null)
 
-  const sendMessage = () => {
-    if (!input.trim()) return
-    const userMsg = { from: "user", text: input }
-    const botMsg = { from: "bot", text: getBotResponse(input) }
-    setMessages([...messages, userMsg, botMsg])
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return
+
+    const userMessage = input.trim()
     setInput("")
+    setMessages(prev => [...prev, { from: "user", text: userMessage }])
+    setLoading(true)
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: `You are EcoNova's AI Waste Management Assistant. You are an expert on:
+- Waste disposal methods for all types of waste (plastic, glass, paper, metal, food waste, e-waste, batteries, clothes, medical waste, etc.)
+- Recycling techniques and best practices
+- Carbon footprint reduction
+- Environmental impact of different waste types
+- Composting and organic waste management
+- Hazardous waste handling
+- Indian waste management regulations and Swachh Bharat initiative
+- Waste segregation (wet waste, dry waste, hazardous waste)
+- Zero waste lifestyle tips
+- Circular economy concepts
+- Municipal solid waste management
+- E-waste recycling centers
+- Plastic waste reduction strategies
+
+Keep answers concise, practical, and helpful. Use simple language. When mentioning bin colors, use Indian standards: Blue (dry/recyclable), Green (wet/organic), Red (hazardous). Always encourage responsible disposal. If asked about something unrelated to waste/environment, politely redirect to your area of expertise.`,
+          messages: [
+            {
+              role: "user",
+              content: userMessage
+            }
+          ]
+        })
+      })
+
+      const data = await response.json()
+      const botReply = data.content?.[0]?.text || "Sorry, I could not process that. Please try again!"
+      setMessages(prev => [...prev, { from: "bot", text: botReply }])
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        from: "bot",
+        text: "Sorry, I am having trouble connecting. Please try again in a moment!"
+      }])
+    }
+
+    setLoading(false)
   }
+
+  const quickQuestions = [
+    "How to dispose plastic?",
+    "What is e-waste?",
+    "How to compost?",
+    "Carbon footprint tips",
+  ]
 
   return (
     <>
@@ -51,34 +85,48 @@ export default function Chatbot() {
         onClick={() => setOpen(!open)}
         style={{
           position: "fixed", bottom: 28, right: 28, zIndex: 999,
-          width: 56, height: 56, borderRadius: "50%",
+          width: 60, height: 60, borderRadius: "50%",
           background: "linear-gradient(135deg, #16a34a, #15803d)",
-          border: "none", cursor: "pointer", fontSize: 24,
+          border: "none", cursor: "pointer",
           boxShadow: "0 4px 20px rgba(22,163,74,0.5)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "all 0.2s"
+          transition: "all 0.3s", fontSize: 24
         }}
       >
-        {open ? "✕" : "💬"}
+        {open ? "✕" : "🤖"}
       </button>
 
       {/* Chat window */}
       {open && (
         <div style={{
-          position: "fixed", bottom: 96, right: 28, zIndex: 999,
-          width: 340, height: 460, background: "white",
+          position: "fixed", bottom: 100, right: 28, zIndex: 999,
+          width: 360, height: 520, background: "white",
           borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-          border: "1px solid #f3f4f6", display: "flex", flexDirection: "column",
-          overflow: "hidden"
+          border: "1px solid #f3f4f6", display: "flex",
+          flexDirection: "column", overflow: "hidden"
         }}>
 
           {/* Header */}
           <div style={{
-            background: "linear-gradient(135deg, #16a34a, #15803d)",
-            padding: "16px 20px", color: "white"
+            background: "linear-gradient(135deg, #0a1f12, #16a34a)",
+            padding: "16px 20px"
           }}>
-            <div style={{ fontFamily: "Syne", fontWeight: 700, fontSize: 15 }}>EcoNova Assistant</div>
-            <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>Ask me anything about waste!</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: "rgba(255,255,255,0.2)",
+                display: "flex", alignItems: "center",
+                justifyContent: "center", fontSize: 18
+              }}>🤖</div>
+              <div>
+                <div style={{ fontFamily: "Syne", fontWeight: 700, fontSize: 15, color: "white" }}>
+                  EcoNova AI Assistant
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>
+                  {loading ? "Thinking..." : "Powered by AI • Ask me anything!"}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Messages */}
@@ -87,21 +135,73 @@ export default function Chatbot() {
               <div key={i} style={{
                 display: "flex",
                 justifyContent: m.from === "user" ? "flex-end" : "flex-start",
-                marginBottom: 10
+                marginBottom: 12
               }}>
+                {m.from === "bot" && (
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%",
+                    background: "linear-gradient(135deg, #16a34a, #15803d)",
+                    display: "flex", alignItems: "center",
+                    justifyContent: "center", fontSize: 14,
+                    marginRight: 8, flexShrink: 0, marginTop: 2
+                  }}>🤖</div>
+                )}
                 <div style={{
-                  maxWidth: "80%", padding: "10px 14px", borderRadius: 12,
-                  fontSize: 13, lineHeight: 1.5,
+                  maxWidth: "78%", padding: "10px 14px", borderRadius: 14,
+                  fontSize: 13, lineHeight: 1.6,
                   background: m.from === "user" ? "#16a34a" : "#f3f4f6",
                   color: m.from === "user" ? "white" : "#1a2e1f",
-                  borderBottomRightRadius: m.from === "user" ? 2 : 12,
-                  borderBottomLeftRadius: m.from === "bot" ? 2 : 12,
+                  borderBottomRightRadius: m.from === "user" ? 2 : 14,
+                  borderBottomLeftRadius: m.from === "bot" ? 2 : 14,
+                  whiteSpace: "pre-wrap"
                 }}>
                   {m.text}
                 </div>
               </div>
             ))}
+
+            {loading && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: "linear-gradient(135deg, #16a34a, #15803d)",
+                  display: "flex", alignItems: "center",
+                  justifyContent: "center", fontSize: 14
+                }}>🤖</div>
+                <div style={{
+                  background: "#f3f4f6", padding: "10px 16px",
+                  borderRadius: 14, borderBottomLeftRadius: 2
+                }}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {[0, 1, 2].map(i => (
+                      <div key={i} style={{
+                        width: 8, height: 8, borderRadius: "50%",
+                        background: "#16a34a",
+                        animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`
+                      }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
+
+          {/* Quick questions */}
+          {messages.length === 1 && (
+            <div style={{ padding: "0 16px 8px", display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {quickQuestions.map((q, i) => (
+                <button key={i} onClick={() => { setInput(q); }}
+                  style={{
+                    padding: "5px 10px", borderRadius: 20, fontSize: 11,
+                    background: "#f0fdf4", border: "1px solid #bbf7d0",
+                    color: "#16a34a", cursor: "pointer", fontWeight: 600
+                  }}>
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Input */}
           <div style={{
@@ -112,20 +212,31 @@ export default function Chatbot() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && sendMessage()}
-              placeholder="Ask about waste, points..."
+              placeholder="Ask about waste disposal..."
+              disabled={loading}
               style={{
                 flex: 1, padding: "10px 14px", borderRadius: 10,
                 border: "1px solid #e5e7eb", fontSize: 13,
-                outline: "none", fontFamily: "DM Sans"
+                outline: "none", fontFamily: "DM Sans",
+                opacity: loading ? 0.6 : 1
               }}
             />
-            <button onClick={sendMessage} style={{
-              background: "#16a34a", color: "white", border: "none",
-              borderRadius: 10, padding: "10px 14px", cursor: "pointer", fontSize: 14
+            <button onClick={sendMessage} disabled={loading} style={{
+              background: loading ? "#9ca3af" : "#16a34a",
+              color: "white", border: "none",
+              borderRadius: 10, padding: "10px 14px",
+              cursor: loading ? "not-allowed" : "pointer", fontSize: 14
             }}>→</button>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes bounce {
+          0%, 60%, 100% { transform: translateY(0); }
+          30% { transform: translateY(-6px); }
+        }
+      `}</style>
     </>
   )
 }

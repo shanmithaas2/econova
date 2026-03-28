@@ -20,7 +20,7 @@ export default function Register() {
     if (!form.name || !form.email || !form.password) { setError("Please fill in all fields"); return }
     setLoading(true); setError("")
     try {
-      await axios.post("https://econova-backend-qg2j.onrender.com/auth/register", form)
+      await axios.post("http://localhost:8000/auth/register", form)
       setSuccess("Account created! Redirecting to login...")
       setTimeout(() => navigate("/login"), 2000)
     } catch (err) {

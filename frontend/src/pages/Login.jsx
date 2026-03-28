@@ -13,7 +13,7 @@ export default function Login() {
     if (!email || !password) { setError("Please fill in all fields"); return }
     setLoading(true); setError("")
     try {
-      const res = await axios.post("https://econova-backend-qg2j.onrender.com/auth/login", { email, password })
+      const res = await axios.post("http://localhost:8000/auth/login", { email, password })
       localStorage.setItem("token", res.data.token)
       localStorage.setItem("role", res.data.role)
       localStorage.setItem("name", res.data.name)

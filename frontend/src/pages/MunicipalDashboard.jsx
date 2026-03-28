@@ -5,7 +5,7 @@ import StatCard from "../components/StatCard"
 import PageHeader from "../components/PageHeader"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
-const API = "https://econova-backend-qg2j.onrender.com"
+const API = "http://localhost:8000"
 
 const pickupData = [
   { area: "RS Puram",     count: 24 },

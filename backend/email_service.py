@@ -8,20 +8,39 @@ load_dotenv()
 
 def send_email(to_email: str, subject: str, body: str):
     try:
-        sender = os.getenv("BREVO_SMTP_USER")
-        password = os.getenv("BREVO_SMTP_KEY")
+        # Use Brevo if available, else fall back to Gmail
+        brevo_user = os.getenv("BREVO_SMTP_USER")
+        brevo_key = os.getenv("BREVO_SMTP_KEY")
+        gmail_user = os.getenv("GMAIL_USER")
+        gmail_password = os.getenv("GMAIL_PASSWORD")
 
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = f"EcoNova <{sender}>"
-        msg["To"] = to_email
+        if brevo_user and brevo_key:
+            # Brevo SMTP (for production)
+            sender = brevo_user
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"EcoNova <{sender}>"
+            msg["To"] = to_email
+            msg.attach(MIMEText(body, "html"))
+            with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+                server.starttls()
+                server.login(brevo_user, brevo_key)
+                server.sendmail(sender, to_email, msg.as_string())
+        elif gmail_user and gmail_password:
+            # Gmail SMTP (for local development)
+            sender = gmail_user
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"EcoNova <{sender}>"
+            msg["To"] = to_email
+            msg.attach(MIMEText(body, "html"))
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(gmail_user, gmail_password)
+                server.sendmail(sender, to_email, msg.as_string())
+        else:
+            print("No email credentials found!")
+            return False
 
-        msg.attach(MIMEText(body, "html"))
-        with smtplib.SMTP_SSL("smtp-relay.brevo.com", 465) as server:
-            server.login(sender, password)
-            server.sendmail(sender, to_email, msg.as_string())
-
-        
         print(f"Email sent successfully to {to_email}")
         return True
     except Exception as e:
