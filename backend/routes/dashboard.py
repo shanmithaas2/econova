@@ -30,12 +30,15 @@ def citizen_dashboard(db: Session = Depends(get_db), user_id: int = Depends(get_
         Activity.user_id == user_id
     ).order_by(Activity.created_at.desc()).limit(5).all()
 
+    # Calculate eco score dynamically
+    eco_score = min(100, round((user.reward_points / 10) + (float(total_carbon) * 2)))
+
     return {
         "name": user.name,
         "waste_recycled": round(total_waste, 2),
         "carbon_saved": round(total_carbon, 2),
         "reward_points": user.reward_points,
-        "eco_score": user.eco_score,
+        "eco_score": eco_score,
         "activities": [
             {
                 "action": a.action,
@@ -100,7 +103,7 @@ def leaderboard(db: Session = Depends(get_db)):
             "rank": i + 1,
             "name": u.name,
             "points": u.reward_points,
-            "eco_score": u.eco_score
+            "eco_score": min(100, round((u.reward_points / 10) + (u.eco_score * 2)))
         }
         for i, u in enumerate(users)
     ]
