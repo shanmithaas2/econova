@@ -54,15 +54,6 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-### Environment Variables
-Create a `.env` file in the backend directory with:
-```
-DATABASE_URL=your_supabase_postgres_url
-JWT_SECRET=your_jwt_secret
-```
-
----
-
 ## 📄 License
 
 This project was developed for academic purposes as part of the AICTE Activity Point Programme.
